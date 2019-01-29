@@ -1,9 +1,14 @@
 /*
- * Custom version of ESP32 HTTPClient Library to send custom header and payload.
+ * Customized version of ESP32 HTTPClient Library. To allow custom header and payload string sending
+ * for http and https connection.
+ *
+ * Use as part of my Firebase-ESP32 and LineNotify-ESP32 libraries for Arduino.
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
  * 
+ * HTTPClient Arduino library for ESP32
+ *
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
  * This file is part of the HTTPClient for Arduino.
  * Port to ESP32 by Evandro Luis Copercini (2017), 
@@ -24,6 +29,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
 */
+
 #ifndef HTTPClientESP32Ex_CPP
 #define HTTPClientESP32Ex_CPP
 
@@ -73,9 +79,7 @@ class TLSTraits : public TransportTraits
 };
 
 
-HTTPClientESP32Ex::HTTPClientESP32Ex()
-{
-}
+HTTPClientESP32Ex::HTTPClientESP32Ex() {}
 
 HTTPClientESP32Ex::~HTTPClientESP32Ex()
 {
