@@ -1,5 +1,5 @@
 /*
- * Modified version of ESP32 HTTPClient Library.
+ * Custom version of ESP32 HTTPClient Library to send custom header and payload.
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
