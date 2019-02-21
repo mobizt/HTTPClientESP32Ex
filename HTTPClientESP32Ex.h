@@ -30,20 +30,21 @@
  *
 */
 
-#ifndef HTTPClientESP32Ex_H_
-#define HTTPClientESP32Ex_H_
+#ifndef HTTP_CLIENT_ESP32EX_H_
+#define HTTP_CLIENT_ESP32EX_H_
 
-#include <HTTPClient.h>
 #include <Arduino.h>
+#include <HTTPClient.h>
+
 #include <WiFiClient.h>
 #include <WiFiClientSecure.h>
 
-class HTTPClientESP32Ex:public HTTPClient
+class HTTPClientESP32Ex : public HTTPClient
 {
   public:
     HTTPClientESP32Ex();
     ~HTTPClientESP32Ex();
-    
+
     /**
     * Initialization of new http connection.
     * \param host - Host name without protocols.
@@ -53,7 +54,7 @@ class HTTPClientESP32Ex:public HTTPClient
     * \return True as default.
     * If no certificate string provided, use (const char*)NULL to CAcert param 
     */
-    bool http_begin(const char* host, uint16_t port, const char* uri, const char* CAcert);
+    bool http_begin(const char *host, uint16_t port, const char *uri, const char *CAcert);
 
     /**
     * Check the http connection status.
@@ -68,7 +69,7 @@ class HTTPClientESP32Ex:public HTTPClient
     * \return http status code, Return zero if new http connection and header and/or payload sent 
     * with no error or no header and payload provided. If obly payload provided, no new http connection was established.
     */
-    int http_sendRequest(const char* header, const char* payload);
+    int http_sendRequest(const char *header, const char *payload);
 
     /**
     * Send extra header without making new http connection (if http_sendRequest has been called)
@@ -76,18 +77,20 @@ class HTTPClientESP32Ex:public HTTPClient
     * \return True if header sending success.
     * Need to call http_sendRequest with header first. 
     */
-    bool http_sendHeader(const char* header);
+    bool http_sendHeader(const char *header);
 
     /**
     * Get the WiFi client pointer.
     * \return WiFi client pointer.
     */
-    WiFiClient* http_getStreamPtr(void);
-	
-    uint16_t tcpTimeout = HTTPCLIENT_DEFAULT_TCP_TIMEOUT;
+    WiFiClient *http_getStreamPtr(void);
+
+    bool http_connect(void);
+
+    uint16_t tcpTimeout =  HTTPCLIENT_DEFAULT_TCP_TIMEOUT;
 
   protected:
-    bool http_connect(void);
+    
     TransportTraitsPtr http_transportTraits;
     std::unique_ptr<WiFiClient> _tcp;
 
@@ -95,7 +98,5 @@ class HTTPClientESP32Ex:public HTTPClient
     char _uri[200];
     uint16_t _port = 0;
 };
-
-
 
 #endif /* HTTPClientESP32Ex_H_ */
