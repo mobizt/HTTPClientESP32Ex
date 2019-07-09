@@ -1,7 +1,7 @@
 {
     "name": "HTTPClientESP32Ex",
     "keywords": "http, wi-fi",
-    "description": "The helper class and actually a sub class of HTTPClient library which add some function to send custom HTTP header and payload.",
+    "description": "The helper class of HTTPClient library which add some function to send custom HTTP header and payload.",
     "repository": {
         "type": "git",
         "url": "https://github.com/mobizt/HTTPClientESP32Ex"

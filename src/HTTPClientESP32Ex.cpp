@@ -1,5 +1,5 @@
 /*
- * Customized version of ESP32 HTTPClient Library. To allow custom header and payload string sending
+ * The ESP32 HTTPClient helper Library that allow custom header and payload string sending
  * for http and https connection.
  *
  * Use as part of my Firebase-ESP32 and LineNotify-ESP32 libraries for Arduino.
