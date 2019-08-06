@@ -1,8 +1,8 @@
 /*
- * The ESP32 HTTPClient helper Library that allow custom header and payload string sending
- * for http and https connection.
- *
- * Use as part of my Firebase-ESP32 and LineNotify-ESP32 libraries for Arduino.
+ * Customized version of ESP32 HTTPClient Library. 
+ * Allow custom header and payload with STARTTLS support
+ * 
+ * v 1.1.0
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
@@ -33,124 +33,162 @@
 #ifndef HTTPClientESP32Ex_CPP
 #define HTTPClientESP32Ex_CPP
 
-
 #include "HTTPClientESP32Ex.h"
 
 class TransportTraits
 {
-  public:
-    virtual ~TransportTraits(){}
+public:
+    virtual ~TransportTraits() {}
 
     virtual std::unique_ptr<WiFiClient> create()
     {
-      return std::unique_ptr<WiFiClient>(new WiFiClient());
+        return std::unique_ptr<WiFiClient>(new WiFiClient());
     }
 
-    virtual bool verify(WiFiClient& client, const char* host)
+    virtual bool
+    verify(WiFiClient &client, const char *host, bool starttls)
     {
-      return true;
+        return true;
     }
 };
 
 class TLSTraits : public TransportTraits
 {
-  public:
-    TLSTraits(const char* CAcert, const char* clicert = nullptr, const char* clikey = nullptr):
-      _cacert(CAcert), _clicert(clicert), _clikey(clikey){}
+public:
+    TLSTraits(const char *CAcert, const char *clicert = nullptr, const char *clikey = nullptr) : _cacert(CAcert), _clicert(clicert), _clikey(clikey) {}
 
     std::unique_ptr<WiFiClient> create() override
     {
-      return std::unique_ptr<WiFiClient>(new WiFiClientSecure());
+        return std::unique_ptr<WiFiClient>(new WiFiClientSecureESP32());
     }
 
-    bool verify(WiFiClient& client, const char* host) override
+    bool verify(WiFiClient &client, const char *host, bool starttls) override
     {
-      WiFiClientSecure& wcs = static_cast<WiFiClientSecure&>(client);
-      wcs.setCACert(_cacert);
-      wcs.setCertificate(_clicert);
-      wcs.setPrivateKey(_clikey);
-      return true;
+        WiFiClientSecureESP32 &wcs = static_cast<WiFiClientSecureESP32 &>(client);
+        wcs.setCACert(_cacert);
+        wcs.setCertificate(_clicert);
+        wcs.setPrivateKey(_clikey);
+        wcs.setSTARTTLS(starttls);
+        return true;
     }
 
-  protected:
-    const char* _cacert;
-    const char* _clicert;
-    const char* _clikey;
+protected:
+    const char *_cacert;
+    const char *_clicert;
+    const char *_clikey;
 };
-
 
 HTTPClientESP32Ex::HTTPClientESP32Ex() {}
 
 HTTPClientESP32Ex::~HTTPClientESP32Ex()
 {
-  if (_tcp) _tcp->stop();
+    if (_tcp)
+        _tcp->stop();
 }
 
-bool HTTPClientESP32Ex::http_begin(const char* host, uint16_t port, const char* uri, const char* CAcert)
+bool HTTPClientESP32Ex::http_begin(const char *host, uint16_t port, const char *uri, const char *CAcert)
 {
-  http_transportTraits.reset(nullptr);
-  memset(_host, 0, sizeof _host);
-  strcpy(_host, host);
-  _port = port;
-  memset(_uri, 0, sizeof _uri);
-  strcpy(_uri, uri);
-  http_transportTraits = TransportTraitsPtr(new TLSTraits(CAcert));
-  return true;
+    http_transportTraits.reset(nullptr);
+    memset(_host, 0, sizeof _host);
+    strcpy(_host, host);
+    _port = port;
+    memset(_uri, 0, sizeof _uri);
+    strcpy(_uri, uri);
+    http_transportTraits = TransportTraitsPtr(new TLSTraits(CAcert));
+    return true;
 }
-
 
 bool HTTPClientESP32Ex::http_connected()
 {
-  if (_tcp) return ((_tcp->available() > 0) || _tcp->connected());
-  return false;
+    if (_tcp)
+        return ((_tcp->available() > 0) || _tcp->connected());
+    return false;
 }
 
-
-bool HTTPClientESP32Ex::http_sendHeader(const char* header)
+bool HTTPClientESP32Ex::http_sendHeader(const char *header)
 {
-  if (!http_connected())return false;
-  return (_tcp->write(header, strlen(header)) == strlen(header));
+    if (!http_connected())
+        return false;
+    return (_tcp->write(header, strlen(header)) == strlen(header));
 }
 
-int HTTPClientESP32Ex::http_sendRequest(const char* header, const char* payload)
+int HTTPClientESP32Ex::http_sendRequest(const char *header, const char *payload)
 {
-  size_t size = strlen(payload);
-  if(strlen(header)>0){
-	if (!http_connect()) return HTTPC_ERROR_CONNECTION_REFUSED;  
-	if (!http_sendHeader(header))return HTTPC_ERROR_SEND_HEADER_FAILED;
-  }
-  if (size > 0)
-    if (_tcp->write(&payload[0], size) != size)
-      return HTTPC_ERROR_SEND_PAYLOAD_FAILED;
-  return 0;
+    Serial.print(header);
+    Serial.print(payload);
+    size_t size = strlen(payload);
+    if (strlen(header) > 0)
+    {
+        if (!http_connect())
+            return HTTPC_ERROR_CONNECTION_REFUSED;
+        if (!http_sendHeader(header))
+            return HTTPC_ERROR_SEND_HEADER_FAILED;
+    }
+    if (size > 0)
+        if (_tcp->write(&payload[0], size) != size)
+            return HTTPC_ERROR_SEND_PAYLOAD_FAILED;
+
+    return 0;
 }
 
-
-WiFiClient* HTTPClientESP32Ex::http_getStreamPtr(void)
+WiFiClient *HTTPClientESP32Ex::http_getStreamPtr(void)
 {
-  if (http_connected()) return _tcp.get();
-  return nullptr;
+    if (http_connected())
+        return _tcp.get();
+    return nullptr;
 }
 
 bool HTTPClientESP32Ex::http_connect(void)
 {
-  if (http_connected()) {
-    while (_tcp->available() > 0) _tcp->read();
-    return true;
-  }
+    if (http_connected())
+    {
+        while (_tcp->available() > 0)
+            _tcp->read();
+        return true;
+    }
 
-  if (!http_transportTraits)
-     return false;
+    if (!http_transportTraits)
+        return false;
 
-  _tcp = http_transportTraits->create();
+    _tcp = http_transportTraits->create();
 
-  if (!http_transportTraits->verify(*_tcp, _host)) {
-    _tcp->stop();
-    return false;
-  }
+    if (!http_transportTraits->verify(*_tcp, _host, false))
+    {
+        _tcp->stop();
+        return false;
+    }
 
-  if (!_tcp->connect(_host, _port)) return false;
-  
-  return http_connected();
+    if (!_tcp->connect(_host, _port))
+        return false;
+
+    return http_connected();
+}
+
+bool HTTPClientESP32Ex::http_connect(bool starttls)
+{
+    if (http_connected())
+    {
+        while (_tcp->available() > 0)
+            _tcp->read();
+        return true;
+    }
+
+    if (!http_transportTraits)
+        return false;
+
+    _tcp = http_transportTraits->create();
+   
+
+    if (!http_transportTraits->verify(*_tcp, _host, starttls))
+    {
+        _tcp->stop();
+        return false;
+    }
+
+
+    if (!_tcp->connect(_host, _port))
+        return false;
+
+    return http_connected();
 }
 #endif

@@ -1,8 +1,8 @@
 /*
- * The ESP32 HTTPClient helper Library that allow custom header and payload string sending
- * for http and https connection.
- *
- * Use as part of my Firebase-ESP32 and LineNotify-ESP32 libraries for Arduino.
+ * Customized version of ESP32 HTTPClient Library. 
+ * Allow custom header and payload with STARTTLS support
+ * 
+ * v 1.1.0
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
@@ -37,7 +37,7 @@
 #include <HTTPClient.h>
 
 #include <WiFiClient.h>
-#include <WiFiClientSecure.h>
+#include "WiFiClientSecureESP32.h"
 
 class HTTPClientESP32Ex : public HTTPClient
 {
@@ -85,12 +85,11 @@ class HTTPClientESP32Ex : public HTTPClient
     */
     WiFiClient *http_getStreamPtr(void);
 
+    uint16_t tcpTimeout = HTTPCLIENT_DEFAULT_TCP_TIMEOUT;
     bool http_connect(void);
-
-    uint16_t tcpTimeout =  HTTPCLIENT_DEFAULT_TCP_TIMEOUT;
+    bool http_connect(bool starttls);
 
   protected:
-    
     TransportTraitsPtr http_transportTraits;
     std::unique_ptr<WiFiClient> _tcp;
 
