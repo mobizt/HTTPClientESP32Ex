@@ -1,5 +1,5 @@
 # HTTPClientESP32Ex
-Customized version of ESP32 HTTPClient Library v1.1.1. 
+Customized version of ESP32 HTTPClient Library v1.1.2. 
 
 Allow custom header and payload string sending for http and https connections.
 

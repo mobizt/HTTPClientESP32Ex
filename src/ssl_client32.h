@@ -1,5 +1,5 @@
 /*
- *Customized ssl_client.h to support STARTTLS protocol, version 1.0.1
+ *Customized ssl_client.h to support STARTTLS protocol, version 1.0.2
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
@@ -37,9 +37,10 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/error.h"
 
-typedef void (*DebugMsgCallback)(const char* msg);
+typedef void (*DebugMsgCallback)(const char *msg);
 
-typedef struct sslclient_context32 {
+typedef struct sslclient_context32
+{
     int socket;
     bool starttls;
     mbedtls_ssl_context ssl_ctx;
@@ -57,14 +58,13 @@ typedef struct sslclient_context32 {
     unsigned long handshake_timeout;
 } sslclient_context32;
 
-
 void ssl_init(sslclient_context32 *ssl_client);
 int start_ssl_client(sslclient_context32 *ssl_client, const char *host, uint32_t port, int timeout, const char *rootCABuff, const char *cli_cert, const char *cli_key, const char *pskIdent, const char *psKey);
 void stop_ssl_socket(sslclient_context32 *ssl_client, const char *rootCABuff, const char *cli_cert, const char *cli_key);
 int data_to_read(sslclient_context32 *ssl_client);
 int send_ssl_data(sslclient_context32 *ssl_client, const uint8_t *data, uint16_t len);
 int get_ssl_receive(sslclient_context32 *ssl_client, uint8_t *data, int length);
-bool verify_ssl_fingerprint(sslclient_context32 *ssl_client, const char* fp, const char* domain_name);
-bool verify_ssl_dn(sslclient_context32 *ssl_client, const char* domain_name);
+bool verify_ssl_fingerprint(sslclient_context32 *ssl_client, const char *fp, const char *domain_name);
+bool verify_ssl_dn(sslclient_context32 *ssl_client, const char *domain_name);
 int starttlsHandshake(sslclient_context32 *ssl_client, int port);
 #endif
