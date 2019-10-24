@@ -30,7 +30,8 @@
  *
 */
 
-
+#ifndef HTTPClientESP32Ex_CPP
+#define HTTPClientESP32Ex_CPP
 
 #include "HTTPClientESP32Ex.h"
 
@@ -82,33 +83,33 @@ HTTPClientESP32Ex::HTTPClientESP32Ex() {}
 
 HTTPClientESP32Ex::~HTTPClientESP32Ex()
 {
-    if (_client)
-        _client->stop();
+    if (_tcp)
+        _tcp->stop();
 }
 
 bool HTTPClientESP32Ex::http_begin(const char *host, uint16_t port, const char *uri, const char *CAcert)
 {
-    transportTraits.reset(nullptr);
+    http_transportTraits.reset(nullptr);
 
     _host = host;
     _port = port;
     _uri = uri;
-    transportTraits = TransportTraitsPtr(new TLSTraits(CAcert));
+    http_transportTraits = TransportTraitsPtr(new TLSTraits(CAcert));
     return true;
 }
 
 bool HTTPClientESP32Ex::http_connected()
 {
-    if (_client)
-        return ((_client->available() > 0) || _client->connected());
+    if (_tcp)
+        return ((_tcp->available() > 0) || _tcp->connected());
     return false;
 }
 
 bool HTTPClientESP32Ex::http_sendHeader(const char *header)
 {
-    if (!connected())
+    if (!http_connected())
         return false;
-    return (_client->write(header, strlen(header)) == strlen(header));
+    return (_tcp->write(header, strlen(header)) == strlen(header));
 }
 
 int HTTPClientESP32Ex::http_sendRequest(const char *header, const char *payload)
@@ -116,13 +117,13 @@ int HTTPClientESP32Ex::http_sendRequest(const char *header, const char *payload)
     size_t size = strlen(payload);
     if (strlen(header) > 0)
     {
-        if (!connect())
+        if (!http_connect())
             return HTTPC_ERROR_CONNECTION_REFUSED;
-        if (!sendHeader(header))
+        if (!http_sendHeader(header))
             return HTTPC_ERROR_SEND_HEADER_FAILED;
     }
     if (size > 0)
-        if (_client->write(&payload[0], size) != size)
+        if (_tcp->write(&payload[0], size) != size)
             return HTTPC_ERROR_SEND_PAYLOAD_FAILED;
 
     return 0;
@@ -130,65 +131,65 @@ int HTTPClientESP32Ex::http_sendRequest(const char *header, const char *payload)
 
 WiFiClient *HTTPClientESP32Ex::http_getStreamPtr(void)
 {
-    if (connected())
-        return _client.get();
+    if (http_connected())
+        return _tcp.get();
     return nullptr;
 }
 
 bool HTTPClientESP32Ex::http_connect(void)
 {
-    if (connected())
+    if (http_connected())
     {
-        while (_client->available() > 0)
-            _client->read();
+        while (_tcp->available() > 0)
+            _tcp->read();
         return true;
     }
 
-    if (!transportTraits)
+    if (!http_transportTraits)
         return false;
 
-    _client = transportTraits->create();
+    _tcp = http_transportTraits->create();
 
-    if (!transportTraits->verify(*_client, _host.c_str(), false, _debugCallback))
+    if (!http_transportTraits->verify(*_tcp, _host.c_str(), false, _debugCallback))
     {
-        _client->stop();
+        _tcp->stop();
         return false;
     }
 
-    if (!_client->connect(_host.c_str(), _port))
+    if (!_tcp->connect(_host.c_str(), _port))
         return false;
 
-    return connected();
+    return http_connected();
 }
 
 bool HTTPClientESP32Ex::http_connect(bool starttls)
 {
-    if (connected())
+    if (http_connected())
     {
-        while (_client->available() > 0)
-            _client->read();
+        while (_tcp->available() > 0)
+            _tcp->read();
         return true;
     }
 
-    if (!transportTraits)
+    if (!http_transportTraits)
         return false;
 
-    _client = transportTraits->create();
+    _tcp = http_transportTraits->create();
 
-    if (!transportTraits->verify(*_client, _host.c_str(), starttls, _debugCallback))
+    if (!http_transportTraits->verify(*_tcp, _host.c_str(), starttls, _debugCallback))
     {
-        _client->stop();
+        _tcp->stop();
         return false;
     }
 
-    if (!_client->connect(_host.c_str(), _port))
+    if (!_tcp->connect(_host.c_str(), _port))
         return false;
 
-    return connected();
+    return http_connected();
 }
 
 void HTTPClientESP32Ex::setDebugCallback(DebugMsgCallback cb)
 {
     _debugCallback = std::move(cb);
 }
-
+#endif

@@ -91,8 +91,8 @@ public:
   void setDebugCallback(DebugMsgCallback cb);
 
 protected:
-  TransportTraitsPtr transportTraits;
-  std::unique_ptr<WiFiClient> _client;
+  TransportTraitsPtr http_transportTraits;
+  std::unique_ptr<WiFiClient> _tcp;
   DebugMsgCallback _debugCallback = NULL;
 
   std::string _host = "";
@@ -100,8 +100,4 @@ protected:
   uint16_t _port = 0;
 };
 
-
-
 #endif /* HTTPClientESP32Ex_H_ */
-
-
