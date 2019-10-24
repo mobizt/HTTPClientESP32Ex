@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload with STARTTLS support
  * 
- * v 1.1.3
+ * v 1.2.0
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
@@ -30,8 +30,7 @@
  *
 */
 
-#ifndef HTTPClientESP32Ex_CPP
-#define HTTPClientESP32Ex_CPP
+
 
 #include "HTTPClientESP32Ex.h"
 
@@ -83,33 +82,33 @@ HTTPClientESP32Ex::HTTPClientESP32Ex() {}
 
 HTTPClientESP32Ex::~HTTPClientESP32Ex()
 {
-    if (_tcp)
-        _tcp->stop();
+    if (_client)
+        _client->stop();
 }
 
 bool HTTPClientESP32Ex::http_begin(const char *host, uint16_t port, const char *uri, const char *CAcert)
 {
-    http_transportTraits.reset(nullptr);
+    transportTraits.reset(nullptr);
 
     _host = host;
     _port = port;
     _uri = uri;
-    http_transportTraits = TransportTraitsPtr(new TLSTraits(CAcert));
+    transportTraits = TransportTraitsPtr(new TLSTraits(CAcert));
     return true;
 }
 
 bool HTTPClientESP32Ex::http_connected()
 {
-    if (_tcp)
-        return ((_tcp->available() > 0) || _tcp->connected());
+    if (_client)
+        return ((_client->available() > 0) || _client->connected());
     return false;
 }
 
 bool HTTPClientESP32Ex::http_sendHeader(const char *header)
 {
-    if (!http_connected())
+    if (!connected())
         return false;
-    return (_tcp->write(header, strlen(header)) == strlen(header));
+    return (_client->write(header, strlen(header)) == strlen(header));
 }
 
 int HTTPClientESP32Ex::http_sendRequest(const char *header, const char *payload)
@@ -117,13 +116,13 @@ int HTTPClientESP32Ex::http_sendRequest(const char *header, const char *payload)
     size_t size = strlen(payload);
     if (strlen(header) > 0)
     {
-        if (!http_connect())
+        if (!connect())
             return HTTPC_ERROR_CONNECTION_REFUSED;
-        if (!http_sendHeader(header))
+        if (!sendHeader(header))
             return HTTPC_ERROR_SEND_HEADER_FAILED;
     }
     if (size > 0)
-        if (_tcp->write(&payload[0], size) != size)
+        if (_client->write(&payload[0], size) != size)
             return HTTPC_ERROR_SEND_PAYLOAD_FAILED;
 
     return 0;
@@ -131,65 +130,65 @@ int HTTPClientESP32Ex::http_sendRequest(const char *header, const char *payload)
 
 WiFiClient *HTTPClientESP32Ex::http_getStreamPtr(void)
 {
-    if (http_connected())
-        return _tcp.get();
+    if (connected())
+        return _client.get();
     return nullptr;
 }
 
 bool HTTPClientESP32Ex::http_connect(void)
 {
-    if (http_connected())
+    if (connected())
     {
-        while (_tcp->available() > 0)
-            _tcp->read();
+        while (_client->available() > 0)
+            _client->read();
         return true;
     }
 
-    if (!http_transportTraits)
+    if (!transportTraits)
         return false;
 
-    _tcp = http_transportTraits->create();
+    _client = transportTraits->create();
 
-    if (!http_transportTraits->verify(*_tcp, _host.c_str(), false, _debugCallback))
+    if (!transportTraits->verify(*_client, _host.c_str(), false, _debugCallback))
     {
-        _tcp->stop();
+        _client->stop();
         return false;
     }
 
-    if (!_tcp->connect(_host.c_str(), _port))
+    if (!_client->connect(_host.c_str(), _port))
         return false;
 
-    return http_connected();
+    return connected();
 }
 
 bool HTTPClientESP32Ex::http_connect(bool starttls)
 {
-    if (http_connected())
+    if (connected())
     {
-        while (_tcp->available() > 0)
-            _tcp->read();
+        while (_client->available() > 0)
+            _client->read();
         return true;
     }
 
-    if (!http_transportTraits)
+    if (!transportTraits)
         return false;
 
-    _tcp = http_transportTraits->create();
+    _client = transportTraits->create();
 
-    if (!http_transportTraits->verify(*_tcp, _host.c_str(), starttls, _debugCallback))
+    if (!transportTraits->verify(*_client, _host.c_str(), starttls, _debugCallback))
     {
-        _tcp->stop();
+        _client->stop();
         return false;
     }
 
-    if (!_tcp->connect(_host.c_str(), _port))
+    if (!_client->connect(_host.c_str(), _port))
         return false;
 
-    return http_connected();
+    return connected();
 }
 
 void HTTPClientESP32Ex::setDebugCallback(DebugMsgCallback cb)
 {
     _debugCallback = std::move(cb);
 }
-#endif
+
